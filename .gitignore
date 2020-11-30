@@ -1,2 +1,7 @@
+target
 *.class
 *.log
+*.sc
+.idea
+.ensime*
+.bsp
