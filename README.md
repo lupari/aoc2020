@@ -1,6 +1,6 @@
 # aoc2020
 
-[![Scala CI](https://github.com/lupari/aoc2020/workflows/Scala%20CI/badge.svg?branch=master)](https://github.com/lupari/aoc2020/actions?query=workflow%3A%22Scala+CI%22)
+[![Scala CI](https://github.com/lupari/aoc2020/workflows/Scala%20CI/badge.svg?branch=main)](https://github.com/lupari/aoc2020/actions?query=workflow%3A%22Scala+CI%22)
 
 Advent of Code 2020 (http://adventofcode.com/2020) personal exercises in Scala
 
