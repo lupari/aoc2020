@@ -5,7 +5,7 @@ import scala.io.Source
 object Day04 {
 
   val requiredFields = List("byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid")
-  val validators: Map[String, (String) => Boolean] = Map(
+  val validators: Map[String, String => Boolean] = Map(
     "byr" -> ((s: String) => s.toIntOption.exists(i => 1920 <= i && i <= 2002)),
     "iyr" -> ((s: String) => s.toIntOption.exists(i => 2010 <= i && i <= 2020)),
     "eyr" -> ((s: String) => s.toIntOption.exists(i => 2020 <= i && i <= 2030)),
