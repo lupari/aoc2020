@@ -11,7 +11,7 @@ object Graphs {
       while (open.nonEmpty) {
         val current = open.minBy(_._2)
         open -= current
-        if (current._1 == goal) open.clear
+        if (current._1 == goal) open.clear()
         else {
           val newCost   = costs(current._1) + 1
           val neighbors = nf(current._1)
