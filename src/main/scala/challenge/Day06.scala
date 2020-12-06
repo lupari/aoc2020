@@ -6,7 +6,7 @@ object Day06 {
 
   val answers: List[String] = Source.fromResource("day06.txt").mkString.trim.split("\n\n").toList
 
-  def partOne(): Int = answers.map(_.filter(_.isLetter).toSet.mkString).mkString.length
+  def partOne(): Int = answers.flatMap(_.filter(_.isLetter).toSet).length
   def partTwo(): Int =
     answers
       .map(_.split("\n"))
