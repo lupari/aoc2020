@@ -13,12 +13,8 @@ object Day05 {
       case 'F' | 'L' => (lo, lo + (hi - lo) / 2)
       case 'B' | 'R' => (lo + (hi - lo) / 2 + 1, hi)
     }
-    val row = s
-      .takeWhile("FB".contains(_))
-      .foldLeft(0, 127)((r, c) => _parse(c, r._1, r._2))
-    val col = s
-      .dropWhile("FB".contains(_))
-      .foldLeft(0, 7)((r, c) => _parse(c, r._1, r._2))
+    val row = s.takeWhile("FB".contains(_)).foldLeft(0, 127)((r, c) => _parse(c, r._1, r._2))
+    val col = s.dropWhile("FB".contains(_)).foldLeft(0, 7)((r, c) => _parse(c, r._1, r._2))
     Seat(row._1, col._1)
   }
 
