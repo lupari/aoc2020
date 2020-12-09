@@ -11,9 +11,9 @@ object Day09 {
     def _findWeakness(xs: List[Long]): Option[Long] = xs match {
       case Nil => None
       case h :: t =>
-        val sums = t.scan(h)(_ + _).takeWhile(_ <= n)
-        if (sums.last == n) {
-          val terms = (h :: t).take(sums.length)
+        val sum = t.scan(h)(_ + _).takeWhile(_ <= n)
+        if (sum.last == n) {
+          val terms = (h :: t).take(sum.length)
           Some(terms.min + terms.max)
         } else _findWeakness(t)
     }

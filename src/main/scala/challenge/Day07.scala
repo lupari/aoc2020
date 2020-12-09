@@ -31,7 +31,7 @@ object Day07 {
   val bags: Bags = Source.fromResource("day07.txt").getLines().map(parse).toMap
 
   def partOne(): Int =
-    Graphs.DFS("shiny gold")(bag => bags.filter(_._2.contains(bag)).keys.toList).length - 1
+    Graphs.DFS("shiny gold")(bag => bags.filter(_._2.contains(bag)).keys).size - 1
 
   def partTwo(): Int = bagsWithin("shiny gold", bags)
 
