@@ -28,7 +28,7 @@ object Day08 {
 
   def fixAndExec(program: Program): Output =
     program.zipWithIndex
-      .filter(l => List("jmp", "nop").contains(l._1._1))
+      .filter(i => Seq("jmp", "nop").contains(i._1._1))
       .map {
         case (("jmp", x), i) => exec(program.updated(i, ("nop", x)))
         case (("nop", x), i) => exec(program.updated(i, ("jmp", x)))
