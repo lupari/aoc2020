@@ -4,12 +4,17 @@ object Points {
 
   case class Point(x: Int, y: Int) {
     def +(p: Point): Point = Point(x + p.x, y + p.y)
-    def neighbors          = List(Point(x, y - 1), Point(x + 1, y), Point(x, y + 1), Point(x - 1, y))
-    def corners =
+    def neighbors: List[Point] =
+      List(Point(x, y - 1), Point(x + 1, y), Point(x, y + 1), Point(x - 1, y))
+    def corners: List[Point] =
       List(Point(x - 1, y - 1), Point(x + 1, y - 1), Point(x - 1, y + 1), Point(x + 1, y + 1))
+    def surroundings: List[Point] = neighbors ++ corners
   }
-  object Point {
-    def adj: List[Point] = List(Point(1, 0), Point(-1, 0), Point(0, 1), Point(0, -1))
+
+  object Position {
+    def neighbors: List[Point]    = List(Point(1, 0), Point(-1, 0), Point(0, 1), Point(0, -1))
+    def corners: List[Point]      = List(Point(1, 1), Point(-1, 1), Point(1, -1), Point(-1, -1))
+    def surroundings: List[Point] = neighbors ++ corners
   }
 
   case class Dir(p: Point, dir: Char) {
