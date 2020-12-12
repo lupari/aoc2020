@@ -1,6 +1,5 @@
 package challenge
 
-import scala.annotation.tailrec
 import scala.io.Source
 
 object Day10 {
@@ -11,16 +10,8 @@ object Day10 {
   }
 
   def connections(adapters: List[Int]): Long = {
-
-    @tailrec
-    def _connections(xs: List[Int], seen: Map[Int, Long]): Long = xs match {
-      case Nil => seen(builtin)
-      case h :: t =>
-        val sum = seen(h - 3) + seen(h - 2) + seen(h - 1)
-        _connections(t, seen + (h -> sum))
-    }
-
-    _connections(adapters.sorted, Map(0 -> 1L).withDefaultValue(0))
+    val init: Map[Int, Long] = Map(0 -> 1L).withDefaultValue(0)
+    adapters.sorted.foldLeft(init)((a, b) => a + (b -> (a(b - 3) + a(b - 2) + a(b - 1))))(builtin)
   }
 
   val adapters: List[Int] = Source.fromResource("day10.txt").getLines().map(_.toInt).toList

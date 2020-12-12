@@ -10,10 +10,11 @@ object Points {
     def corners: List[Point] =
       List(Point(x - 1, y - 1), Point(x + 1, y - 1), Point(x - 1, y + 1), Point(x + 1, y + 1))
     def surroundings: List[Point] = neighbors ++ corners
-    def rotate(deg: Int): Point = {
-      val times = (deg.abs / 90) % 360
-      if (deg > 0) Iterator.iterate(this)(p => Point(p.y, -p.x)).drop(times).next()
-      else Iterator.iterate(this)(p => Point(-p.y, p.x)).drop(times).next()
+    def rotate(deg: Int): Point = deg % 360 match {
+      case 90 | -270  => Point(y, -x)
+      case 180 | -180 => Point(-x, -y)
+      case -90 | 270  => Point(-y, x)
+      case _          => this
     }
     def manhattan(p: Point = Position.zero): Int = (p.x - x).abs + (p.y - y).abs
   }
