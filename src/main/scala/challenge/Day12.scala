@@ -10,21 +10,21 @@ object Day12 {
     def fwd(n: Int): Vessel
     def right(d: Int): Vessel
     def left(d: Int): Vessel
-    def course(d: Char, n: Int): Vessel
+    def other(d: Char, n: Int): Vessel
     def position(): Point
   }
   case class Ship1(loc: Dir) extends Vessel {
     override def fwd(n: Int): Vessel             = Ship1(loc.forward(n))
     override def right(d: Int): Vessel           = Ship1(loc.turn(d))
     override def left(d: Int): Vessel            = Ship1(loc.turn(-d))
-    override def course(d: Char, n: Int): Vessel = Ship1(loc.turn(d).forward(n).turn(loc.dir))
+    override def other(d: Char, n: Int): Vessel = Ship1(loc.turn(d).forward(n).turn(loc.dir))
     override def position(): Point               = loc.p
   }
   case class Ship2(loc: Point, wp: Point) extends Vessel {
     override def fwd(n: Int): Vessel             = Ship2(loc + wp * n, wp)
     override def right(d: Int): Vessel           = Ship2(loc, wp.rotate(d))
     override def left(d: Int): Vessel            = Ship2(loc, wp.rotate(-d))
-    override def course(d: Char, n: Int): Vessel = Ship2(loc, wp + Position.directions(d) * n)
+    override def other(d: Char, n: Int): Vessel = Ship2(loc, wp + Position.directions(d) * n)
     override def position(): Point               = loc
   }
 
@@ -33,7 +33,7 @@ object Day12 {
       case ('F', n) => vessel.fwd(n)
       case ('R', n) => vessel.right(n)
       case ('L', n) => vessel.left(n)
-      case (c, n)   => vessel.course(c, n)
+      case (c, n)   => vessel.other(c, n)
     }
 
     directions.foldLeft(vessel)((a, b) => next(a, b)).position()
