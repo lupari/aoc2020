@@ -17,14 +17,14 @@ object Day12 {
     override def fwd(n: Int): Vessel             = Ship1(loc.forward(n))
     override def right(d: Int): Vessel           = Ship1(loc.turn(d))
     override def left(d: Int): Vessel            = Ship1(loc.turn(-d))
-    override def other(d: Char, n: Int): Vessel = Ship1(loc.turn(d).forward(n).turn(loc.dir))
+    override def other(d: Char, n: Int): Vessel  = Ship1(loc.turn(d).forward(n).turn(loc.dir))
     override def position(): Point               = loc.p
   }
   case class Ship2(loc: Point, wp: Point) extends Vessel {
     override def fwd(n: Int): Vessel             = Ship2(loc + wp * n, wp)
     override def right(d: Int): Vessel           = Ship2(loc, wp.rotate(d))
     override def left(d: Int): Vessel            = Ship2(loc, wp.rotate(-d))
-    override def other(d: Char, n: Int): Vessel = Ship2(loc, wp + Position.directions(d) * n)
+    override def other(d: Char, n: Int): Vessel  = Ship2(loc, wp + Position.directions(d) * n)
     override def position(): Point               = loc
   }
 
