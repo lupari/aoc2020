@@ -1,21 +1,21 @@
 package challenge
 
 import scala.annotation.tailrec
-import scala.collection.mutable
 
 object Day15 {
 
   def play(rounds: Int): Int = {
 
-    // Mutable map outperforms the immutable one here
-    val numbers = mutable.Map() ++ input.zipWithIndex.map(i => i._1 -> (i._2 + 1))
+    // Maps don't perform well here, lets brutally use an array for the job
+    val ns = Array.fill[Int](rounds)(-1)
+    input.zipWithIndex.foreach(i => ns(i._1) = i._2 + 1)
 
     @tailrec
     def _play(round: Int, n: Int): Int = round match {
       case r if r == rounds => n
       case _ =>
-        val n2 = if (numbers.contains(n)) round - numbers(n) else 0
-        numbers += (n -> round)
+        val n2 = if (ns(n) != -1) round - ns(n) else 0
+        ns(n) = round
         _play(round + 1, n2)
     }
 
