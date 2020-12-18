@@ -7,8 +7,7 @@ import scala.io.Source
 object Day17 {
 
   case class Cube(x: Int, y: Int, z: Int, q: Option[Int]) {
-    def neighbors(): Seq[Cube] =
-      Cube.area((this, this), q.isDefined).diff(Seq(this))
+    def neighbors(): Seq[Cube] = Cube.area((this, this), q.isDefined).diff(Seq(this))
   }
   object Cube {
     def area(bb: (Cube, Cube), hyper: Boolean): Seq[Cube] = {
