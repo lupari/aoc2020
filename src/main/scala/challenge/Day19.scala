@@ -2,7 +2,7 @@ package challenge
 
 import scala.io.Source
 import scala.util.matching.Regex
-import scala.util.parsing.combinator.{JavaTokenParsers, RegexParsers}
+import scala.util.parsing.combinator.RegexParsers
 
 object Day19 {
 
@@ -49,24 +49,56 @@ object Day19 {
       (id.toInt, rule)
   }
 
-  val input: List[String]   = Source.fromResource("day19.txt").getLines().toList
-  val rules: Map[Int, Rule] = input.takeWhile(_.nonEmpty).map(parseRule).toMap
-  val values: List[String]  = input.reverse.takeWhile(_.nonEmpty)
+  def permutations(key: Int, rules: Map[Int, String]): List[String] = {
+    val rule: String = rules(key).dropWhile(_ != ' ').tail
+    rule match {
+      case valueRegex(v) => List(v)
+      case _ =>
+        rule
+          .split(" \\| ")
+          .toList
+          .flatMap(p => {
+            val subs = p.split(" ").map(ps => permutations(ps.toInt, rules)).toList
+            subs match {
+              case h :: i :: _ =>
+                (for {
+                  x <- h.indices
+                  y <- i.indices
+                } yield h(x) + i(y)).toList
+              case _ => subs.flatten
+            }
+          })
+    }
+  }
+
+  val input: List[String]  = Source.fromResource("day19.txt").getLines().toList
+  val values: List[String] = input.reverse.takeWhile(_.nonEmpty)
 
   def partOne(): Int = {
-    val checker = RulesParser.validateFn(rules)
-    values.count(checker(_))
+    val rules     = input.takeWhile(_.nonEmpty).map(parseRule).toMap
+    val predicate = RulesParser.validateFn(rules)
+    values.count(predicate(_))
   }
-  def partTwo(): Int = {
-    val r8 = Either(Single(42), Combo(Single(42), Single(8)))
-    val r11 =
-      Either(Combo(Single(42), Single(31)), Combo(Single(42), Combo(Single(11), Single(31))))
-    val rules2  = rules ++ Seq(8 -> r8, 11 -> r11)
-    val checker = RulesParser.validateFn(rules2)
-    val k2      = checker("aaaaabbaabaaaaababaa")
-    val matches = values.filter(checker)
-    values.count(checker)
+  def partTwo2(): Int = {
+    // this is ugly, for some reason (that I am incompetent to understand)
+    // Scala combinator parser gives wrong answer to this
+    // Therefore this deduction based on permutations of problematic rule outcomes
+    def parse(s: String)         = (s.takeWhile(_ != ':').toInt, s.dropWhile(_ != ' ').drop(1))
+    val rules: Map[Int, String]  = input.takeWhile(_.nonEmpty).map(parse).toMap
+    val rules2: Map[Int, String] = rules ++ Seq(8 -> "42 | 42 8", 11 -> "42 31 | 42 11 31")
+    val p42                      = permutations(42, rules2)
+    val p31                      = permutations(31, rules2)
+    def ok(v: String) = {
+      p42.contains(v.take(8)) && p42.contains(v.slice(8, 16)) && p31.contains(v.takeRight(8))
+    }
+    val v2 = values.filter(ok)
+    v2.filterNot(v => {
+        val q  = v.drop(16).dropRight(8)
+        val c0 = q.grouped(8).takeWhile(p42.contains).length
+        val c1 = q.grouped(8).drop(c0).takeWhile(p31.contains).length
+        q.drop(8 * (c0 + c1)).nonEmpty || c1 > c0
+      })
+      .length
   }
 
 }
-// aaaaabbaabaaaaababaa
