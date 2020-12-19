@@ -5,6 +5,6 @@ class Test19 extends flatspec.AnyFlatSpec with matchers.should.Matchers {
 
   it should "calculate correct result" in {
     Day19.partOne() should be(144)
-    // Day19.partTwo2() should be(260)
+    Day19.partTwo() should be(260)
   }
 }
