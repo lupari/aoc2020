@@ -9,7 +9,7 @@ object Day22 {
   type Deck  = Queue[Int]
   type Decks = (Deck, Deck)
 
-  def score(deck: Deck): Int = deck.reverse.zipWithIndex.map(x => (x._2 + 1) * x._1).sum
+  def score(deck: Deck): Int = deck.reverse.zipWithIndex.map(c => (c._2 + 1) * c._1).sum
 
   @tailrec
   def game1(decks: Decks): (Int, Deck) = {
