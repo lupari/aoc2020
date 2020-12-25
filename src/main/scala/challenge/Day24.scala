@@ -23,7 +23,18 @@ object Day24 {
     def ne: Tile       = Tile(1, 0, -1)
   }
 
-  def flip(tiles: List[Tile]): Floor = tiles.map(t => (t, tiles.count(_ == t) % 2 == 1)).toMap
+  def init(tiles: List[Tile]): Floor = tiles.map(t => (t, tiles.count(_ == t) % 2 == 1)).toMap
+
+  def evolve(floor: Floor): Floor = {
+
+    def isBlack(tile: Tile, f: Floor): Boolean = {
+      val blackNeighbors = tile.neighbors.count(f(_))
+      if (f(tile)) blackNeighbors == 1 || blackNeighbors == 2 else blackNeighbors == 2
+    }
+
+    val expansion = floor.keys.flatMap(_.neighbors).filterNot(floor.contains).map(_ -> false)
+    (floor ++ expansion).map(kv => (kv._1, isBlack(kv._1, floor))).withDefaultValue(false)
+  }
 
   def parse(s: String): Tile = {
 
@@ -40,22 +51,8 @@ object Day24 {
     helper(s.toList, Tile.zero)
   }
 
-  def evolve(floor: Floor): Floor = {
-
-    def isBlack(tile: Tile, f: Floor): Boolean = {
-      val blackNeighbors = tile.neighbors.count(n => f(n))
-      tile match {
-        case t if f(t) => blackNeighbors == 1 || blackNeighbors == 2
-        case _         => blackNeighbors == 2
-      }
-    }
-
-    val expansion = floor.keys.flatMap(_.neighbors).filterNot(floor.contains).map(_ -> false)
-    (floor ++ expansion).map(kv => (kv._1, isBlack(kv._1, floor))).withDefaultValue(false)
-  }
-
   val input: List[Tile] = Source.fromResource("day24.txt").getLines().map(parse).toList
-  val floor: Floor      = flip(input).withDefaultValue(false)
+  val floor: Floor      = init(input).withDefaultValue(false)
 
   def partOne(): Int = floor.values.count(_ == true)
   def partTwo(): Int = Iterator.iterate(floor)(evolve).drop(100).next().values.count(_ == true)
