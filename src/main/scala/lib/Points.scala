@@ -4,6 +4,7 @@ object Points {
 
   case class Point(x: Int, y: Int) {
     def +(p: Point): Point = Point(x + p.x, y + p.y)
+    def -(p: Point): Point = Point(x - p.y, y - p.y)
     def *(n: Int): Point   = Point(x * n, y * n)
     def neighbors: List[Point] =
       List(Point(x, y - 1), Point(x + 1, y), Point(x, y + 1), Point(x - 1, y))
@@ -17,6 +18,13 @@ object Points {
       case _          => this
     }
     def manhattan(p: Point = Position.zero): Int = (p.x - x).abs + (p.y - y).abs
+    def directionTo(other: Point): Char = other match {
+      case Point(x2, y2) if x2 == x && y2 < y => 'N'
+      case Point(x2, y2) if x2 == x && y2 > y => 'S'
+      case Point(x2, y2) if y2 == y && x2 < x => 'W'
+      case Point(x2, y2) if y2 == y && x2 > x => 'E'
+      case _                                  => throw new IllegalArgumentException("Points are equal")
+    }
   }
 
   object Position {
@@ -48,6 +56,15 @@ object Points {
       copy(dir = dirs(i % dirs.length))
     }
 
+  }
+
+  case class Box(min: Point, max: Point) {
+    def iterator: Iterator[Point] = {
+      for {
+        x <- (min.x to max.x).iterator
+        y <- (min.y to max.y).iterator
+      } yield Point(x, y)
+    }
   }
 
 }

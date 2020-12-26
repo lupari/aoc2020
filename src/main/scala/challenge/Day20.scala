@@ -1,80 +1,145 @@
 package challenge
 
-import scala.collection.mutable
+import lib.Points.{Box, Point, Position}
+
+import scala.collection.immutable
 import scala.io.Source
 
 object Day20 {
 
-  case class Grid(v: Vector[String]) {
+  type Grid[A] = Vector[Vector[A]]
+  type Border  = Vector[Boolean]
 
-    def flips(grid: Grid): GridList = Vector(Grid(grid.v.reverse), Grid(grid.v.map(_.reverse)))
-
-    def rotations(): GridList = {
-      def rotate90(l: Grid): Grid = Grid(l.v.transpose.map(_.reverse).map(_.mkString))
-
-      (1 to 3).foldLeft(Vector(rotate90(this)))((a, _) => a :+ rotate90(a.last))
-    }
-
-    def variations(): Set[Grid] = {
-      val rotated: GridList = this +: rotations()
-      val flipped: GridList = rotated.flatMap(flips)
-      (rotated ++ flipped).toSet
-    }
-
-    def divide(): GridList = {
-      val n: Int = if (v.size % 2 == 0) 2 else 3
-      v.grouped(n).map(g => g.map(s => s.grouped(n).toList).transpose).toVector.flatten.map(Grid)
-    }
-
-    def count(): Int = v.map(_.count(_ == '#')).sum
-
+  implicit class SymmetricMatrix[A](grid: Grid[A]) {
+    def rotate: Grid[A] = grid.transpose.reverse
+    def flip: Grid[A]   = grid.reverse
+    def variations: Seq[Grid[A]] = Seq(
+      grid,
+      rotate,
+      rotate.rotate,
+      rotate.rotate.rotate,
+      flip,
+      flip.rotate,
+      flip.rotate.rotate,
+      flip.rotate.rotate.rotate,
+    )
   }
 
-  type GridList = Vector[Grid]
+  case class Tile(id: Int, img: Grid[Boolean]) {
+    val borders: Map[Char, Border] =
+      Map('L' -> img.map(_.head), 'R' -> img.map(_.last), 'T' -> img.head, 'B' -> img.last)
+    def borderVariations(): Seq[Border] = borders.values.flatMap(b => Seq(b, b.reverse)).toSeq
+    def variations: Seq[Tile]           = img.variations.map(img => copy(img = img))
+    def inside: Grid[Boolean]           = img.tail.init.map(_.tail.init)
+  }
 
-  def join(grids: GridList): Grid = {
-    val gs: Int = math.sqrt(grids.length.toDouble).toInt
-    gs match {
-      case 1 => grids.head
-      case _ =>
-        val ts: Int = grids.head.v.length
-        val v = grids
-          .grouped(gs)
-          .flatMap(g => (0 until ts).map(i => g.indices.map(j => g(j).v(i)).mkString))
-          .toVector
-        Grid(v)
+  def tilesOfBorder(tiles: Seq[Tile]): Map[Border, Seq[Tile]] =
+    tiles.flatMap(t => t.borderVariations().map(_ -> t)).groupMap(_._1)(_._2)
+
+  def edgeTiles(borderTiles: Map[Border, Seq[Tile]]): Map[Tile, Set[Border]] = {
+    val uniqueBorders =
+      borderTiles
+        .collect({
+          case (border, Seq(tile)) => border -> tile
+        }) // borders that can be fitted to a single tile. This will eliminate the inner tiles
+
+    uniqueBorders.groupMapReduce(_._2)(b => Set(b._1))(_ | _) // map of tile to unique borders
+  }
+
+  def corners(borders: Map[Border, Seq[Tile]]): Seq[Tile] = {
+    val edges = edgeTiles(borders)
+    // corners have 2 unique borders (4 with those borders reversed)
+    edges.filter(_._2.size == 2 * 2).keys.toSeq
+  }
+
+  def corners(tiles: Seq[Tile]): Seq[Tile] = corners(tilesOfBorder(tiles))
+
+  def compose(tiles: Seq[Tile]): Grid[Tile] = {
+    val borderTiles = tilesOfBorder(tiles)
+
+    def composeRow(left: Tile): Vector[Tile] = {
+      val border   = left.borders('R')
+      val newTiles = borderTiles(border).toSet.filterNot(_.id == left.id)
+      if (newTiles.size == 1) {
+        val newTile         = newTiles.head
+        val newTileOriented = newTile.variations.find(_.borders('L') == border).get
+        composeRow1(newTileOriented)
+      } else Vector.empty
     }
-  }
 
-  // memoization grid -> rule
-  val memo: mutable.Map[Grid, Grid] = mutable.Map()
+    def composeRow1(left: Tile): Vector[Tile] = left +: composeRow(left)
 
-  def transform(grid: Grid, rules: Map[Grid, Grid]): Grid = {
-    if (memo.contains(grid)) memo(grid)
-    else {
-      val rule: Grid     = rules.keys.find(k => grid.variations().contains(k)).get
-      val transformation = rules(rule)
-      memo(grid) = transformation
-      transformation
+    def composeCol(top: Tile): Grid[Tile] = {
+      val border   = top.borders('B')
+      val newTiles = borderTiles(border).toSet.filterNot(_.id == top.id)
+      if (newTiles.size == 1) {
+        val newTile          = newTiles.head
+        val newTileVariation = newTile.variations.find(_.borders('T') == border).get
+        composeCol1(newTileVariation)
+      } else Vector.empty
     }
+
+    def composeCol1(top: Tile): Grid[Tile] = composeRow1(top) +: composeCol(top)
+
+    val cornerTiles     = corners(borderTiles)
+    val tlCorner        = cornerTiles.head
+    val tlCornerBorders = edgeTiles(borderTiles)(tlCorner)
+    val tlCornerVariation = tlCorner.variations
+      .find(t =>
+        tlCornerBorders.contains(t.borders('T')) && tlCornerBorders.contains(t.borders('L')))
+      .get
+
+    composeCol1(tlCornerVariation)
   }
 
-  def parse(line: String): (Grid, Grid) = {
-    val parts = line.split(" => ")
-    val rule  = List(parts.head, parts.last).map(_.split("/").toVector.map(_.mkString))
-    (Grid(rule.head), Grid(rule.last))
+  def findSeaMonsters(tiles: Seq[Tile]): Int = {
+    val composition = compose(tiles)
+    val img         = composition.map(_.map(_.inside)).flatMap(_.transpose.map(_.flatten))
+
+    def points(img: Grid[Boolean]): Set[Point] =
+      (for {
+        (row, y) <- img.zipWithIndex
+        (col, x) <- row.zipWithIndex
+        if col // skip empty pixels
+      } yield Point(x, y)).toSet
+
+    val imgPoints = points(img)
+    val imgSize   = Point(img.head.length, img.length)
+
+    def findSeaMonster(seaMonsterImg: Grid[Boolean]): Option[Int] = {
+      val monsterPoints = points(seaMonsterImg)
+      val size          = Point(seaMonsterImg.head.length, seaMonsterImg.length)
+
+      Box(Position.zero, imgSize - size - Point(1, 1)).iterator
+        .map(p => monsterPoints.map(p + _))
+        .filter(_.subsetOf(imgPoints))
+        .reduceOption(_ ++ _)
+        .map(mps => (imgPoints -- mps).size)
+    }
+    val seaMonster: String =
+      """                  #.
+        |#    ##    ##    ###
+        | #  #  #  #  #  #   """.stripMargin
+    val monsterImg = seaMonster.linesIterator.map(_.toVector).toVector.map(_.map(_ == '#'))
+    monsterImg.variations.flatMap(findSeaMonster).head
   }
 
-  def execute(limit: Int): Int = {
-    val input: List[String]              = Source.fromResource("day21.txt").getLines.toList
-    val transformations: Map[Grid, Grid] = input.map(parse).toMap
-    val result: Grid = (1 to limit).foldLeft(Grid(Vector(".#.", "..#", "###")))((a, _) => {
-      val replacements: GridList = a.divide().map(transform(_, transformations))
-      join(replacements)
-    })
-    result.count()
+  def parseTile(s: List[String]): Tile = {
+    val id  = s.head.dropWhile(!_.isDigit).init.toInt
+    val img = s.tail.map(_.toList.map(_ == '#')).toVector
+    Tile(id, img.map(_.toVector))
   }
 
-  def runOne(): Int = execute(5)
+  val tiles: List[Tile] =
+    Source
+      .fromResource("day20.txt")
+      .mkString
+      .split("\n\n")
+      .map(_.linesIterator.toList)
+      .map(parseTile)
+      .toList
+
+  def partOne(): Long = corners(tiles).map(_.id.toLong).product
+  def partTwo(): Int  = findSeaMonsters(tiles)
 
 }

@@ -1,4 +1,4 @@
-import challenge.{Day23, Day24}
+import challenge.Day24
 import org.scalatest._
 
 class Test24 extends flatspec.AnyFlatSpec with matchers.should.Matchers {
