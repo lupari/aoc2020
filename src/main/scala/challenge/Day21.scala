@@ -18,8 +18,9 @@ object Day21 {
   }
 
   def nonAllergenicIngredients(): Set[Ingredient] = {
-    val map = allergens.map(a => a -> foods.filter(_._2.contains(a)).map(_._1).reduce(_ & _)).toMap
-    foods.flatMap(_._1).toSet -- map.values.reduce(_ | _)
+    val map         = allergens.map(a => a -> foods.filter(_._2.contains(a)).map(_._1).reduce(_ & _)).toMap
+    val ingredients = map.values.reduce(_ | _)
+    foods.flatMap(_._1).toSet -- ingredients
   }
 
   def allergenicIngredients(): Causes = {

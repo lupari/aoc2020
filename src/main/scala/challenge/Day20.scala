@@ -2,7 +2,6 @@ package challenge
 
 import lib.Points.{Box, Point, Position}
 
-import scala.collection.immutable
 import scala.io.Source
 
 object Day20 {
@@ -92,7 +91,7 @@ object Day20 {
     composeCol1(tlCornerVariation)
   }
 
-  def findSeaMonsters(tiles: Seq[Tile]): Int = {
+  def monsterCount(tiles: Seq[Tile]): Int = {
     val composition = compose(tiles)
     val img         = composition.map(_.map(_.inside)).flatMap(_.transpose.map(_.flatten))
 
@@ -106,9 +105,9 @@ object Day20 {
     val imgPoints = points(img)
     val imgSize   = Point(img.head.length, img.length)
 
-    def findSeaMonster(seaMonsterImg: Grid[Boolean]): Option[Int] = {
-      val monsterPoints = points(seaMonsterImg)
-      val size          = Point(seaMonsterImg.head.length, seaMonsterImg.length)
+    def findMonster(img: Grid[Boolean]): Option[Int] = {
+      val monsterPoints = points(img)
+      val size          = Point(img.head.length, img.length)
 
       Box(Position.zero, imgSize - size - Point(1, 1)).iterator
         .map(p => monsterPoints.map(p + _))
@@ -117,11 +116,11 @@ object Day20 {
         .map(mps => (imgPoints -- mps).size)
     }
     val seaMonster: String =
-      """                  #.
+      """                  # 
         |#    ##    ##    ###
         | #  #  #  #  #  #   """.stripMargin
     val monsterImg = seaMonster.linesIterator.map(_.toVector).toVector.map(_.map(_ == '#'))
-    monsterImg.variations.flatMap(findSeaMonster).head
+    monsterImg.variations.flatMap(findMonster).head
   }
 
   def parseTile(s: List[String]): Tile = {
@@ -140,6 +139,6 @@ object Day20 {
       .toList
 
   def partOne(): Long = corners(tiles).map(_.id.toLong).product
-  def partTwo(): Int  = findSeaMonsters(tiles)
+  def partTwo(): Int  = monsterCount(tiles)
 
 }

@@ -12,7 +12,7 @@ object Day18 {
   case class Mul(t1: Op, t2: Op) extends Op
   case class Num(t: Long)        extends Op
 
-  class Parser extends JavaTokenParsers {
+  class ArithmeticParser extends JavaTokenParsers {
     def numeric: Parser[Op] = wholeNumber ^^ (number => Num(number.toLong))
     def eval(op: Op): Long = op match {
       case Add(a, b) => eval(a) + eval(b)
@@ -21,7 +21,7 @@ object Day18 {
     }
   }
 
-  class Parser1 extends Parser { // sum and mul have equal precedence
+  class Parser1 extends ArithmeticParser { // sum and mul have equal precedence
     def expr: Parser[Op] = term ~ rep("+" ~ term | "*" ~ term) ^^ {
       case n ~ ns => ns.foldLeft(n)((a, b) => if (b._1 == "+") Add(a, b._2) else Mul(a, b._2))
     }
@@ -31,7 +31,7 @@ object Day18 {
     def calculate(s: String): Long = parse(expr, s).map(eval).get
   }
 
-  class Parser2 extends Parser { // sum has higher precedence over mul
+  class Parser2 extends ArithmeticParser { // sum has higher precedence over mul
     def expr: Parser[Op] = term ~ rep("*" ~ term) ^^ {
       case n ~ ns => ns.foldLeft(n)((a, b) => Mul(a, b._2))
     }
