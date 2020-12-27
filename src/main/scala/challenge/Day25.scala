@@ -7,7 +7,7 @@ object Day25 {
   def loopSize(pbk: Int): Int =
     Iterator.iterate((1L, 0))(i => (transform(i._1, 7L), i._2 + 1)).find(_._1 == pbk).get._2
 
-  def encrypt(sn: Int, loops: Int): Long = Iterator.iterate(1L)(transform(_, sn)).drop(loops).next()
+  def encrypt(sn: Int, loops: Int): Long = (1 to loops).foldLeft(1L)((a, _) => transform(a, sn))
 
   def partOne(): Long = {
     val (pbk1, pbk2) = (10705932, 12301431)

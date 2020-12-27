@@ -8,9 +8,9 @@ object Day18 {
   // Inspiration from https://gist.github.com/kiritsuku/5529436
 
   trait Op
-  case class Add(t1: Op, t2: Op) extends Op
-  case class Mul(t1: Op, t2: Op) extends Op
-  case class Num(t: Long)        extends Op
+  case class Add(op1: Op, op2: Op) extends Op
+  case class Mul(op1: Op, op2: Op) extends Op
+  case class Num(op1: Long)        extends Op
 
   class ArithmeticParser extends JavaTokenParsers {
     def numeric: Parser[Op] = wholeNumber ^^ (number => Num(number.toLong))

@@ -29,7 +29,7 @@ object Day24 {
 
     def isBlack(tile: Tile, f: Floor): Boolean = {
       val blackNeighbors = tile.neighbors.count(f(_))
-      if (f(tile)) blackNeighbors == 1 || blackNeighbors == 2 else blackNeighbors == 2
+      blackNeighbors == 2 || f(tile) && blackNeighbors == 1
     }
 
     val expansion = floor.keys.flatMap(_.neighbors).filterNot(floor.contains).map(_ -> false)

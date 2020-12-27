@@ -50,9 +50,9 @@ object Day14 {
 
     @tailrec
     def _exec(xs: List[Cmd], mask: String, reg: Map[Long, Long]): Long = xs match {
-      case Mask(m) :: t           => _exec(t, m, reg)
-      case (mem @ Mem(_, _)) :: t => _exec(t, mask, reg ++ memFn(mem, mask).toMap)
-      case _                      => reg.values.sum
+      case Mask(m) :: t    => _exec(t, m, reg)
+      case (mem: Mem) :: t => _exec(t, mask, reg ++ memFn(mem, mask).toMap)
+      case _               => reg.values.sum
     }
 
     _exec(input, "", Map.empty)

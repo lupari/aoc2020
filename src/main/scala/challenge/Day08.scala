@@ -12,18 +12,18 @@ object Day08 {
   def exec(program: Program): Output = {
 
     @tailrec
-    def _exec(ptr: Int, acc: Int, seen: Set[Int]): Output = ptr match {
+    def helper(ptr: Int, acc: Int, seen: Set[Int]): Output = ptr match {
       case p if p == program.length => Output(success = true, acc)
       case p if seen.contains(p)    => Output(success = false, acc) // Will not halt
       case _ =>
         program(ptr) match {
-          case ("nop", _) => _exec(ptr + 1, acc, seen + ptr)
-          case ("acc", x) => _exec(ptr + 1, acc + x, seen + ptr)
-          case ("jmp", x) => _exec(ptr + x, acc, seen + ptr)
+          case ("nop", _) => helper(ptr + 1, acc, seen + ptr)
+          case ("acc", x) => helper(ptr + 1, acc + x, seen + ptr)
+          case ("jmp", x) => helper(ptr + x, acc, seen + ptr)
         }
     }
 
-    _exec(0, 0, Set.empty)
+    helper(0, 0, Set.empty)
   }
 
   def fixAndExec(program: Program): Output =

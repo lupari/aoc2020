@@ -34,18 +34,18 @@ object Day21 {
       .filter(kv => kv._2.nonEmpty)
 
     @tailrec
-    def deduce(xs: Map[Allergen, Set[Ingredient]], acc: Causes): Causes = {
+    def helper(xs: Map[Allergen, Set[Ingredient]], acc: Causes): Causes = {
       if (xs.isEmpty) acc
       else {
         val matching: Map[Allergen, Ingredient] = xs.collect {
           case (k, v) if v.size == 1 => k -> v.iterator.next()
         }
         val next = xs.view.mapValues(_ -- matching.values).filter(_._2.nonEmpty).toMap
-        deduce(next, acc ++ matching)
+        helper(next, acc ++ matching)
       }
     }
 
-    deduce(map, Map.empty)
+    helper(map, Map.empty)
   }
 
   val foods: List[Food]                = Source.fromResource("day21.txt").getLines().map(parse).toList

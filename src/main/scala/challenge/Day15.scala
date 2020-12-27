@@ -11,15 +11,15 @@ object Day15 {
     input.zipWithIndex.foreach(i => ns(i._1) = i._2 + 1)
 
     @tailrec
-    def _play(round: Int, n: Int): Int = round match {
+    def helper(round: Int, n: Int): Int = round match {
       case r if r == rounds => n
       case _ =>
         val n2 = if (ns(n) != -1) round - ns(n) else 0
         ns(n) = round
-        _play(round + 1, n2)
+        helper(round + 1, n2)
     }
 
-    _play(input.length + 1, 0)
+    helper(input.length + 1, 0)
   }
 
   val input: List[Int] = List(0, 14, 6, 20, 1, 4)

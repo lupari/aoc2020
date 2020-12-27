@@ -10,10 +10,9 @@ object Day02 {
     def isValid2: Boolean = pwd.charAt(min - 1) == letter ^ pwd.charAt(max - 1) == letter
   }
 
-  val pattern: Regex = "(\\d+)-(\\d+) (\\w): (\\w+)".r
-  def parse(s: String): Setting = {
-    val pattern(min, max, letter, pwd) = s
-    Setting(min.toInt, max.toInt, letter.head, pwd)
+  val pattern: Regex = """(\d+)-(\d+) (\w): (\w+)""".r
+  def parse(s: String): Setting = s match {
+    case pattern(min, max, letter, pwd) => Setting(min.toInt, max.toInt, letter.head, pwd)
   }
 
   val input: List[Setting] = Source.fromResource("day02.txt").getLines().map(parse).toList

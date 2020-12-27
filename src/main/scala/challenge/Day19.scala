@@ -2,7 +2,6 @@ package challenge
 
 import scala.io.Source
 import scala.util.matching.Regex
-import scala.util.parsing.combinator.RegexParsers
 
 object Day19 {
 
@@ -12,20 +11,22 @@ object Day19 {
   case class Both(r1: Rule, r2: Rule)   extends Rule
   case class Either(r1: Rule, r2: Rule) extends Rule
 
-  object RulesParser extends RegexParsers {
+  object RulesParser {
     def validateFn(rules: Map[Int, Rule]): String => Boolean = {
 
       def step(rule: Rule, chars: List[Char]): Iterator[List[Char]] = rule match {
-        case Value(v)     => chars match {
-          case h :: t if h == v => Iterator(t)
-          case _ => Iterator.empty
-        }
+        case Value(v) =>
+          chars match {
+            case h :: t if h == v => Iterator(t)
+            case _                => Iterator.empty
+          }
         case Single(i)    => step(rules(i), chars)
         case Both(a, b)   => step(a, chars).flatMap(step(b, _))
         case Either(a, b) => step(a, chars) ++ step(b, chars)
       }
 
-      s => step(Single(0), s.toList).contains(Nil)
+      s =>
+        step(rules(0), s.toList).contains(Nil)
     }
   }
 
@@ -61,7 +62,7 @@ object Day19 {
   }
   def partTwo(): Int = {
     val rules = input.takeWhile(_.nonEmpty).map(parseRule).toMap ++ Map(
-      8 -> Either(Single(42), Both(Single(42), Single(8))),
+      8  -> Either(Single(42), Both(Single(42), Single(8))),
       11 -> Either(Both(Single(42), Single(31)), Both(Both(Single(42), Single(11)), Single(31)))
     )
     val validator = RulesParser.validateFn(rules)

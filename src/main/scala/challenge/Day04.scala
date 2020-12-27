@@ -22,7 +22,7 @@ object Day04 {
             })),
     "hcl" -> (s =>
       s.length == 7 && s.head == '#' && s.tail.forall(c => c.isDigit || ('a' to 'f').contains(c))),
-    "ecl" -> (List("amb", "blu", "brn", "gry", "grn", "hzl", "oth").contains(_)),
+    "ecl" -> (Seq("amb", "blu", "brn", "gry", "grn", "hzl", "oth").contains(_)),
     "pid" -> (s => s.length == 9 && s.forall(_.isDigit))
   )
 

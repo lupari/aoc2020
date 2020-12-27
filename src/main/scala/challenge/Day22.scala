@@ -17,8 +17,7 @@ object Day22 {
     case (d1, d2) if d1.isEmpty => (2, d2)
     case _ =>
       val ((c1, d1), (c2, d2)) = (decks._1.dequeue, decks._2.dequeue)
-      if (c1 > c2) game1(d1 :+ c1 :+ c2, d2)
-      else game1(d1, d2 :+ c2 :+ c1)
+      if (c1 > c2) game1(d1 :+ c1 :+ c2, d2) else game1(d1, d2 :+ c2 :+ c1)
   }
 
   implicit val memo: Set[Decks] = Set.empty
@@ -33,8 +32,7 @@ object Day22 {
           val winner = game2((d1.take(c1), d2.take(c2)))._1
           if (winner == 1) (d1 :+ c1 :+ c2, d2) else (d1, d2 :+ c2 :+ c1)
         } else {
-          if (c1 > c2) (d1 :+ c1 :+ c2, d2)
-          else (d1, d2 :+ c2 :+ c1)
+          if (c1 > c2) (d1 :+ c1 :+ c2, d2) else (d1, d2 :+ c2 :+ c1)
         }
       game2(newDeal)(memo + decks)
   }

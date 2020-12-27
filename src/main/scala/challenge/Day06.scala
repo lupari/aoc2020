@@ -9,7 +9,7 @@ object Day06 {
   def partOne(): Int = answers.flatMap(_.filter(_.isLetter).toSet).length
   def partTwo(): Int =
     answers
-      .map(_.split("\n"))
+      .map(_.linesIterator.toSeq)
       .flatMap(g => g.mkString.toSet.filter(c => g.forall(_.contains(c))))
       .length
 

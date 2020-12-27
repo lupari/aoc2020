@@ -25,23 +25,19 @@ object Day20 {
   }
 
   case class Tile(id: Int, img: Grid[Boolean]) {
-    val borders: Map[Char, Border] =
+    def borders: Map[Char, Border] =
       Map('L' -> img.map(_.head), 'R' -> img.map(_.last), 'T' -> img.head, 'B' -> img.last)
-    def borderVariations(): Seq[Border] = borders.values.flatMap(b => Seq(b, b.reverse)).toSeq
-    def variations: Seq[Tile]           = img.variations.map(img => copy(img = img))
-    def inside: Grid[Boolean]           = img.tail.init.map(_.tail.init)
+    def borderVariations: Seq[Border] = borders.values.flatMap(b => Seq(b, b.reverse)).toSeq
+    def variations: Seq[Tile]         = img.variations.map(img => copy(img = img))
+    def inside: Grid[Boolean]         = img.tail.init.map(_.tail.init)
   }
 
   def tilesOfBorder(tiles: Seq[Tile]): Map[Border, Seq[Tile]] =
-    tiles.flatMap(t => t.borderVariations().map(_ -> t)).groupMap(_._1)(_._2)
+    tiles.flatMap(t => t.borderVariations.map(_ -> t)).groupMap(_._1)(_._2)
 
   def edgeTiles(borderTiles: Map[Border, Seq[Tile]]): Map[Tile, Set[Border]] = {
-    val uniqueBorders =
-      borderTiles
-        .collect({
-          case (border, Seq(tile)) => border -> tile
-        }) // borders that can be fitted to a single tile. This will eliminate the inner tiles
-
+    val uniqueBorders = // borders that can be fitted to a single tile. This will eliminate the inner tiles
+      borderTiles.collect({ case (border, Seq(tile)) => border -> tile })
     uniqueBorders.groupMapReduce(_._2)(b => Set(b._1))(_ | _) // map of tile to unique borders
   }
 
@@ -56,42 +52,36 @@ object Day20 {
   def compose(tiles: Seq[Tile]): Grid[Tile] = {
     val borderTiles = tilesOfBorder(tiles)
 
-    def composeRow(left: Tile): Vector[Tile] = {
-      val border   = left.borders('R')
-      val newTiles = borderTiles(border).toSet.filterNot(_.id == left.id)
-      if (newTiles.size == 1) {
-        val newTile         = newTiles.head
-        val newTileOriented = newTile.variations.find(_.borders('L') == border).get
-        composeRow1(newTileOriented)
-      } else Vector.empty
+    def findTile(src: Tile, horizontally: Boolean): Option[Tile] = {
+      val border = src.borders(if (horizontally) 'R' else 'B')
+      val tiles  = borderTiles(border).toSet.filterNot(_.id == src.id)
+      if (tiles.size == 1)
+        tiles.head.variations.find(_.borders(if (horizontally) 'L' else 'T') == border)
+      else None
     }
 
-    def composeRow1(left: Tile): Vector[Tile] = left +: composeRow(left)
+    def composeRow(left: Tile): Vector[Tile] =
+      findTile(left, horizontally = true).map(composeRows).getOrElse(Vector.empty)
 
-    def composeCol(top: Tile): Grid[Tile] = {
-      val border   = top.borders('B')
-      val newTiles = borderTiles(border).toSet.filterNot(_.id == top.id)
-      if (newTiles.size == 1) {
-        val newTile          = newTiles.head
-        val newTileVariation = newTile.variations.find(_.borders('T') == border).get
-        composeCol1(newTileVariation)
-      } else Vector.empty
-    }
+    def composeRows(left: Tile): Vector[Tile] = left +: composeRow(left)
 
-    def composeCol1(top: Tile): Grid[Tile] = composeRow1(top) +: composeCol(top)
+    def composeColumn(top: Tile): Grid[Tile] =
+      findTile(top, horizontally = false).map(composeImg).getOrElse(Vector.empty)
+
+    def composeImg(top: Tile): Grid[Tile] = composeRows(top) +: composeColumn(top)
 
     val cornerTiles     = corners(borderTiles)
     val tlCorner        = cornerTiles.head
     val tlCornerBorders = edgeTiles(borderTiles)(tlCorner)
-    val tlCornerVariation = tlCorner.variations
+    val tlCornerVariant = tlCorner.variations
       .find(t =>
         tlCornerBorders.contains(t.borders('T')) && tlCornerBorders.contains(t.borders('L')))
       .get
 
-    composeCol1(tlCornerVariation)
+    composeImg(tlCornerVariant)
   }
 
-  def monsterCount(tiles: Seq[Tile]): Int = {
+  def waterRoughness(tiles: Seq[Tile]): Int = {
     val composition = compose(tiles)
     val img         = composition.map(_.map(_.inside)).flatMap(_.transpose.map(_.flatten))
 
@@ -103,24 +93,28 @@ object Day20 {
       } yield Point(x, y)).toSet
 
     val imgPoints = points(img)
-    val imgSize   = Point(img.head.length, img.length)
+    val imgFrame  = Point(img.head.length, img.length)
 
-    def findMonster(img: Grid[Boolean]): Option[Int] = {
+    def countMonsters(img: Grid[Boolean]): Int = {
       val monsterPoints = points(img)
-      val size          = Point(img.head.length, img.length)
+      val monsterFrame  = Point(img.head.length, img.length)
 
-      Box(Position.zero, imgSize - size - Point(1, 1)).iterator
+      Box(Position.zero, imgFrame - monsterFrame).iterator
         .map(p => monsterPoints.map(p + _))
         .filter(_.subsetOf(imgPoints))
         .reduceOption(_ ++ _)
-        .map(mps => (imgPoints -- mps).size)
+        .map(_.size / monsterPoints.size)
+        .getOrElse(0)
     }
-    val seaMonster: String =
-      """                  # 
+
+    val seaMonster =
+      // the extra tilde on top right is to prevent IDE from removing a trailing white space :D
+      """                  #~
         |#    ##    ##    ###
         | #  #  #  #  #  #   """.stripMargin
-    val monsterImg = seaMonster.linesIterator.map(_.toVector).toVector.map(_.map(_ == '#'))
-    monsterImg.variations.flatMap(findMonster).head
+    val monsterImg   = seaMonster.linesIterator.map(_.toVector).toVector.map(_.map(_ == '#'))
+    val monsterCount = monsterImg.variations.map(countMonsters).find(_ > 0).get
+    imgPoints.size - monsterCount * seaMonster.count(_ == '#')
   }
 
   def parseTile(s: List[String]): Tile = {
@@ -139,6 +133,6 @@ object Day20 {
       .toList
 
   def partOne(): Long = corners(tiles).map(_.id.toLong).product
-  def partTwo(): Int  = monsterCount(tiles)
+  def partTwo(): Int  = waterRoughness(tiles)
 
 }

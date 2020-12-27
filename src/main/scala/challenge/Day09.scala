@@ -8,17 +8,17 @@ object Day09 {
   def findWeakness(numbers: List[Long], n: Long): Option[Long] = {
 
     @tailrec
-    def _findWeakness(xs: List[Long]): Option[Long] = xs match {
+    def helper(xs: List[Long]): Option[Long] = xs match {
       case Nil => None
       case h :: t =>
         val sum = t.scan(h)(_ + _).takeWhile(_ <= n)
         if (sum.last == n) {
           val terms = (h :: t).take(sum.length)
           Some(terms.min + terms.max)
-        } else _findWeakness(t)
+        } else helper(t)
     }
 
-    _findWeakness(numbers)
+    helper(numbers)
   }
 
   val input: List[Long] = Source.fromResource("day09.txt").getLines().map(_.toLong).toList
