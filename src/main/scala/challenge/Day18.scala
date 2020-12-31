@@ -48,5 +48,6 @@ object Day18 {
 
   def partOne(): Long = sentences.map(Parser1.calculate).sum
   def partTwo(): Long = sentences.map(Parser2.calculate).sum
+  //AST.eval(AST.parse(s)((a, b) => a == '+' || b == '*'))
 
 }

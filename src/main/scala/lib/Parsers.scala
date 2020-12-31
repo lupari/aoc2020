@@ -3,74 +3,51 @@ package lib
 import scala.annotation.tailrec
 
 object Parsers {
+  type Op = Char
 
   object AST {
     trait Node
-    case class Value(v: Int)                                           extends Node
-    case class Tree(op: Char, left: Option[Node], right: Option[Node]) extends Node
-
-    def parse(expr: String)(precedenceFn: (Char, Char) => Boolean): Node = {
-
-      def node(stack: List[Node], op: Char): Node =
-        Tree(op, stack.tail.headOption, stack.headOption)
-
-      @tailrec
-      def helper(xs: List[Char], stack: List[Char], acc: List[Node]): Node = xs match {
-        case Nil => node(acc, stack.head)
-        case h :: t =>
-          h match {
-            case n if n.isDigit => helper(t, stack, Value(h.asDigit) +: acc)
-            case '+' | '*' =>
-              val out       = stack.takeWhile(s => s != '(' && precedenceFn(s, h))
-              val nextStack = h +: stack.drop(out.length)
-              val nextAcc   = out.map(node(acc, _))
-              helper(t, nextStack, nextAcc ++ acc.drop(nextAcc.length * 2))
-            case '(' => helper(t, h +: stack, acc)
-            case ')' =>
-              val out       = stack.takeWhile(_ != '(')
-              val nextStack = stack.drop(out.length).drop(1)
-              val nextAcc   = out.map(node(acc, _))
-              helper(t, nextStack, nextAcc ++ acc.drop(nextAcc.length * 2))
-          }
-      }
-
-      helper(expr.filterNot(_ == ' ').toList, Nil, Nil)
-    }
+    case class Value(v: Int)                         extends Node
+    case class Tree(op: Op, left: Node, right: Node) extends Node
 
     def eval(node: Node): Long = node match {
-      case Tree(op, Some(l), Some(r)) =>
+      case Tree(op, l, r) =>
         op match {
           case '+' => eval(l) + eval(r)
+          case '-' => eval(l) - eval(r)
           case '*' => eval(l) * eval(r)
+          case '/' => eval(l) / eval(r)
         }
       case Value(op) => op.toLong
     }
-  }
 
-  object Postfix {
+    def parse(expr: String)(precedence: (Op, Op) => Boolean): Node = {
 
-    def parse(expr: String)(precedenceFn: (Char, Char) => Boolean): List[Char] = {
+      def compose(nodes: List[Node], ops: List[Op]): List[Node] =
+        ops.foldLeft(nodes)((ns, op) => Tree(op, ns.tail.head, ns.head) +: ns.tail.tail)
 
       @tailrec
-      def helper(xs: List[Char], stack: List[Char], acc: List[Char]): List[Char] = xs match {
-        case Nil => acc ++ stack
+      def helper(xs: List[Char], ops: List[Op], acc: List[Node]): Node = xs match {
+        case Nil => compose(acc, ops).head
         case h :: t =>
           h match {
-            case n if n.isDigit => helper(t, stack, acc :+ n)
-            case '+' | '*' =>
-              val out       = stack.takeWhile(s => s != '(' && precedenceFn(s, h))
-              val nextStack = h +: stack.drop(out.length)
-              helper(t, nextStack, acc ++ out)
-            case '(' => helper(t, h +: stack, acc)
+            case n if n.isDigit => helper(t, ops, Value(n.asDigit) +: acc)
+            case '('            => helper(t, h +: ops, acc)
             case ')' =>
-              val out       = stack.takeWhile(_ != '(')
-              val nextStack = stack.drop(out.length).drop(1)
-              helper(t, nextStack, acc ++ out)
+              val (out, ops2) = ops.span(_ != '(')
+              helper(t, ops2.tail, compose(acc, out))
+            case _ =>
+              val (out, ops2) = ops.span(o => o != '(' && precedence(o, h))
+              helper(t, h +: ops2, compose(acc, out))
           }
       }
 
       helper(expr.filterNot(_ == ' ').toList, Nil, Nil)
     }
+
+  }
+
+  object Postfix {
 
     def eval(expr: List[Char]): Long = {
 
@@ -82,12 +59,40 @@ object Parsers {
             case n if n.isDigit => helper(t, n.asDigit.toLong +: stack)
             case _ =>
               val (right, left) = (stack.head, stack.tail.head)
-              val op            = if (h == '+') left + right else left * right
-              helper(t, op +: stack.drop(2))
+              val v = h match {
+                case '+' => left + right
+                case '-' => left - right
+                case '*' => left * right
+                case '/' => left / right
+              }
+              helper(t, v +: stack.drop(2))
           }
       }
 
       helper(expr, Nil)
     }
+
+    def parse(expr: String)(precedence: (Op, Op) => Boolean): List[Char] = {
+
+      @tailrec
+      def helper(xs: List[Char], ops: List[Op], acc: List[Char]): List[Char] = xs match {
+        case Nil => acc ++ ops
+        case h :: t =>
+          h match {
+            case n if n.isDigit => helper(t, ops, acc :+ n)
+            case '('            => helper(t, h +: ops, acc)
+            case ')' =>
+              val (out, ops2) = ops.span(_ != '(')
+              helper(t, ops2.tail, acc ++ out)
+            case _ =>
+              val (out, ops2) = ops.span(o => o != '(' && precedence(o, h))
+              helper(t, h +: ops2, acc ++ out)
+          }
+      }
+
+      helper(expr.filterNot(_ == ' ').toList, Nil, Nil)
+    }
+
   }
+
 }
